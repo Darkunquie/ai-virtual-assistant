@@ -1,0 +1,193 @@
+import pyttsx3
+import datetime
+import speech_recognition as sr
+import smtplib
+from secrets import senderemail,epwd, to
+from email.message import EmailMessage
+import pyautogui
+import webbrowser as wb
+from time import sleep
+import wikipedia
+import pywhatkit 
+import requests
+from newsapi import NewsApiClient
+
+engine = pyttsx3.init()
+def speak(text):
+    engine.say(text)
+    engine.runAndWait()
+    
+def time():
+    Time=datetime.datetime.now().strftime("%I:%M:%S")
+    speak(" the current time is:")
+    speak(Time)    
+    print(Time)
+     
+def date():
+    year=int(datetime.datetime.now().year)
+    month=int(datetime.datetime.now().month)
+    date =int(datetime.datetime.now().day)
+    speak("the curent date is:")
+    speak(date)
+    speak(month)
+    speak(year)
+    print(date)
+
+
+def  greeting():
+    hour=datetime.datetime.now().hour
+    if hour >=6 and hour <12:
+        speak("Good morning Sir!")
+    elif hour >=12 and hour <18:
+        speak("Good afternoon Sir!")
+    elif hour >=18 and hour<24:
+        speak("Good evening Sir!")
+    else:    
+        speak("Good night Sir!")
+
+def wishme():
+    speak("welcome back Sir!.")
+    time()
+    date()
+    greeting()
+    speak("jarvis  at your service, please tell me how can i help you?")
+    
+def takeCommandCMD():
+    query=input("please tell me how can i help you?\n")
+    return  query
+def takeCommandMIC():
+    r=sr.Recognizer()
+    with sr.Microphone() as source:
+        print("listening...")
+        r.pause_threshold=1
+        audio=r.listen(source)
+    try:
+        print("Recognizing......")
+        query = r.recognize_google(audio,language='en-IN')
+        print("User said :"+query)
+        
+    except Exception as e:
+        print(e)
+        speak("say  that again please")
+        return "NONE"
+    return query
+
+def sendEmail(receiver,subject,content):
+    server=smtplib.SMTP('smtp.gmail.com',587)
+    server.starttls()
+    server.login(senderemail,epwd)
+    email=EmailMessage()
+    email['From']=senderemail
+    email['To']=receiver
+    email['Subject']=subject
+    email.set_content(content)
+    server.send_message(email)
+    server.close()
+    
+def  sendwhatsmsg(phone_no,message):
+      Message=message
+      wb.open('https://web.whatsapp.com/send?phone='+phone_no+'&text='+Message)
+      sleep(8)
+      pyautogui.press( 'enter' )  
+    
+def searchgoogle():
+    speak('what should i search for ?')
+    search=takeCommandMIC()
+    wb.open('https://www.google.com/search?q='+search)
+    
+def  news():
+      newsapi=NewaApiClient(api_key='917777e44030488d8f4dc599997a4a9a')
+      data=newsapi.get_top_headlines(q='bitcoin',
+                                     language='en',
+                                     page_size=5)
+      
+      newsdata =['articles']
+      for x,y in enumerate(newsdata):
+          print(f'{x}{y["dscription"]}')
+          print((f'{x}{y["dscription"]}'))
+      speak("that's it for now i'll update you in some time ")    
+    
+if __name__=="__main__":
+   #     getvoices(1)
+    wishme()
+    while True:
+        query = takeCommandMIC().lower()
+        if 'time' in query:
+            time()
+        elif 'date' in query:
+            date()
+        elif 'email' in query:    
+            email_list={
+                'test email':'pujarkeerthana04@gmail.com'
+                
+            }
+            try:
+                speak("to whom you want to send")
+                name=takeCommandMIC()
+                receiver=email_list[name]
+                speak("What is the subject?")
+                subject=takeCommandMIC()
+                speak('what should i say in the email?')
+                content=takeCommandMIC()
+                print(content)  
+                sendEmail(receiver,subject,content)
+                speak('email has been sent successfully')
+            except Exception as e:
+                print(e)
+                speak("Sorry I am unable to send the email")
+        elif   'message' in query:
+            user_name={
+                'Aruna':'+91 9959562946'
+                
+            }
+            try:
+                speak("to whom you want to send the message")
+                name=takeCommandMIC()
+                phone_no=user_name[name]
+                speak("What is the message?")
+                message=takeCommandMIC()
+                sendwhatsmsg(phone_no,message)
+                speak('meassage has been sent successfully')
+                print("success")
+            except Exception as e:
+                print(e)
+                speak("Sorry I am unable to send the message")      
+        elif  'wikipedia' in query:
+            speak('searching on wikipedia....')       
+            query=query.replace("wikipedia",  "")
+            results = wikipedia.summary(query, sentences=2)
+            speak("According to Wikipedia")
+            print(results)
+            speak(results)     
+            
+        elif 'search' in query:  
+            searchgoogle()   
+            
+        elif 'youtube ' in query:
+            speak("what should i search on  youtube?")  
+            topic=takeCommandMIC()
+            pywhatkit.playonyt(topic) 
+            
+        elif 'weather' in query:  
+           # village='sirpur kagaznagar'  
+            url= 'http://api.openweathermap.org/data/2.5/weather?q=hyderabad&units=imperial&appid=6a53dd2eb43f5050d2f6328e8e4833bd'
+ 
+            res=requests.get(url)
+            data=res.json()
+            weather=data['weather'] [0] ['main']
+            temp=data['main']['temp'] 
+            desp=data['weather'] [0] ['description']
+            temp=round((temp-32)* 5/9)
+            print(weather)
+            print(temp)
+            print(desp)
+           # speak(f'weather in {village} town is like')
+            speak('Temperature :{} degree celcius'.format(temp))
+            speak('weather is {}'.format(desp))
+        elif  'news'  in query:
+            news()
+          
+            #speak(f"the current temperature is {temp} degree celsius and
+        elif 'offline' in query:
+            speak("thank yousir! have a nice day!")
+            quit()
